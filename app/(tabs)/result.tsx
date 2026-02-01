@@ -19,7 +19,10 @@ export default function ResultScreen() {
       </Text>
       <Text style={styles.text}>Highest Score: {highestScore}</Text>
 
-      <Button title="Back to Home" onPress={() => router.replace("/")} />
+      <Button
+        title="Back to Home"
+        onPress={() => router.replace("/(tabs)" as any)}
+      />
     </View>
   );
 }
