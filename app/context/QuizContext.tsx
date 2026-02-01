@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
-import { questions as defaultQuestions } from "../questions";
+import { questions as defaultQuestions } from "../../questions.js";
 
 export interface Question {
   id: number;
@@ -31,27 +31,36 @@ export const QuizProvider = ({ children }: { children: ReactNode }) => {
   const [timer, setTimer] = useState(300); // 5 minutes default
 
   const addQuestion = (question: Question) => {
-    const maxId = Math.max(...questions.map((q) => q.id), 0);
-    setQuestions([...questions, { ...question, id: maxId + 1 }]);
+    setQuestions((prevQuestions) => {
+      const maxId = Math.max(...prevQuestions.map((q) => q.id), 0);
+      return [...prevQuestions, { ...question, id: maxId + 1 }];
+    });
   };
 
   const deleteQuestion = (id: number) => {
-    setQuestions(questions.filter((q) => q.id !== id));
+    console.log("deleteQuestion called with id:", id);
+    console.log("Current questions before delete:", questions);
+    setQuestions((prevQuestions) => {
+      const filtered = prevQuestions.filter((q) => q.id !== id);
+      console.log("Questions after delete:", filtered);
+      return filtered;
+    });
   };
 
   const updateQuestion = (id: number, updatedQuestion: Question) => {
-    setQuestions(
-      questions.map((q) => (q.id === id ? { ...updatedQuestion, id } : q)),
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) => (q.id === id ? { ...updatedQuestion, id } : q)),
     );
   };
 
   const resetQuestions = () => {
-    setQuestions(
-      (defaultQuestions as any[]).map((q: any) => ({
-        ...q,
-        type: q.type as "multiple" | "truefalse",
-      })),
-    );
+    console.log("resetQuestions called");
+    const resetQs = (defaultQuestions as any[]).map((q: any) => ({
+      ...q,
+      type: q.type as "multiple" | "truefalse",
+    }));
+    console.log("Resetting to:", resetQs);
+    setQuestions(resetQs);
   };
 
   return (

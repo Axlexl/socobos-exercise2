@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Question, useQuiz } from "../QuizContext";
+import { Question, useQuiz } from "../context/QuizContext";
 
 export default function QuizScreen() {
   const { questions, timer } = useQuiz();

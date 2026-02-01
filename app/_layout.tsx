@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { QuizProvider } from "./QuizContext";
+import { QuizProvider } from "./context/QuizContext";
 
 export default function Layout() {
   return (

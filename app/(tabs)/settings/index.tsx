@@ -1,18 +1,17 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Question, useQuiz } from "../../QuizContext";
+import { Question, useQuiz } from "../../context/QuizContext";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -161,15 +160,17 @@ const PreviewQuizComponent = ({
 };
 
 // Quiz Settings Component
-const QuizSettingsComponent = ({
-  questions,
-  timer,
-  setTimer,
-  addQuestion,
-  deleteQuestion,
-  updateQuestion,
-  resetQuestions,
-}: any) => {
+const QuizSettingsComponent = () => {
+  const {
+    questions,
+    timer,
+    setTimer,
+    addQuestion,
+    deleteQuestion,
+    updateQuestion,
+    resetQuestions,
+  } = useQuiz();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -227,16 +228,19 @@ const QuizSettingsComponent = ({
     setModalVisible(true);
   };
 
-  const handleDelete = (id: number) => {
-    Alert.alert("Delete Question", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteQuestion(id),
-      },
-    ]);
-  };
+  const handleDelete = useCallback(
+    (id: number) => {
+      console.log("handleDelete called with id:", id);
+      try {
+        deleteQuestion(id);
+        Alert.alert("Success", "Question deleted successfully");
+      } catch (error) {
+        console.error("Error deleting question:", error);
+        Alert.alert("Error", "Failed to delete question");
+      }
+    },
+    [deleteQuestion],
+  );
 
   const resetForm = () => {
     setEditingId(null);
@@ -252,7 +256,7 @@ const QuizSettingsComponent = ({
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.timerSection}>
         <Text style={styles.sectionTitle}>Quiz Timer (seconds)</Text>
         <TextInput
@@ -286,43 +290,42 @@ const QuizSettingsComponent = ({
         {questions.length === 0 ? (
           <Text style={styles.noQuestionsText}>No questions added yet</Text>
         ) : (
-          <FlatList
-            data={questions}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View style={styles.questionItem}>
-                <View style={styles.questionContent}>
-                  <Text style={styles.questionItemText}>{item.question}</Text>
-                  <Text style={styles.questionMeta}>Answer: {item.answer}</Text>
-                </View>
-                <View style={styles.itemActions}>
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => handleEdit(item)}
-                  >
-                    <Text style={styles.actionButtonText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDelete(item.id)}
-                  >
-                    <Text style={styles.actionButtonText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
+          questions.map((item) => (
+            <View key={item.id.toString()} style={styles.questionItem}>
+              <View style={styles.questionContent}>
+                <Text style={styles.questionItemText}>{item.question}</Text>
+                <Text style={styles.questionMeta}>Answer: {item.answer}</Text>
               </View>
-            )}
-          />
+              <View style={styles.itemActions}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEdit(item)}
+                >
+                  <Text style={styles.actionButtonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDelete(item.id)}
+                >
+                  <Text style={styles.actionButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
         )}
       </View>
 
       <TouchableOpacity
         style={styles.resetButton}
         onPress={() => {
-          Alert.alert("Reset Questions", "Restore default questions?", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Reset", onPress: resetQuestions },
-          ]);
+          console.log("Reset button pressed");
+          try {
+            resetQuestions();
+            Alert.alert("Success", "Questions reset to default");
+          } catch (error) {
+            console.error("Error resetting questions:", error);
+            Alert.alert("Error", "Failed to reset questions");
+          }
         }}
       >
         <Text style={styles.buttonText}>Reset to Default</Text>
@@ -434,22 +437,12 @@ const QuizSettingsComponent = ({
           </View>
         </SafeAreaView>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
 // Settings Screen with Tabs
 export default function SettingsScreen() {
-  const {
-    questions,
-    timer,
-    setTimer,
-    addQuestion,
-    deleteQuestion,
-    updateQuestion,
-    resetQuestions,
-  } = useQuiz();
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -462,24 +455,15 @@ export default function SettingsScreen() {
       <Tab.Screen
         name="preview"
         options={{ title: "Preview Quiz" }}
-        children={() => (
-          <PreviewQuizComponent questions={questions} timer={timer} />
-        )}
+        children={() => {
+          const { questions, timer } = useQuiz();
+          return <PreviewQuizComponent questions={questions} timer={timer} />;
+        }}
       />
       <Tab.Screen
         name="settings"
         options={{ title: "Quiz Settings" }}
-        children={() => (
-          <QuizSettingsComponent
-            questions={questions}
-            timer={timer}
-            setTimer={setTimer}
-            addQuestion={addQuestion}
-            deleteQuestion={deleteQuestion}
-            updateQuestion={updateQuestion}
-            resetQuestions={resetQuestions}
-          />
-        )}
+        children={() => <QuizSettingsComponent />}
       />
     </Tab.Navigator>
   );
